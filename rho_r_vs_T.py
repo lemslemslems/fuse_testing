@@ -46,4 +46,4 @@ def int_rho_r(T_lower, T_upper):
     for i in range(len(ints)):
         sum2 += ints[i](T_intermediates[i])
 
-    return sum1 - sum2  
+    return (sum1 - sum2)*1e-8  
