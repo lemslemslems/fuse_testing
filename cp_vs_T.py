@@ -13,30 +13,41 @@ def cp_disc(x):
 
 # integrated function of cp
 def int_cp(T_lower,T_upper):
+
+    # integration in range 273 - 600K
+    def int_a(x):
+        return 398.18776737*x + -0.02021752/2*x**2 + 0.00057432/3*x**3
+    
+    # integration in range 600 - 700K
+    def int_b(x):
+        return 1008.8601127*x + -0.69177032/2*x**2
+    
+    # integration in range >700K
+    def int_c(x):
+        return 497.38204089*x + -3.70561459e-03/2*x**2 + 5.60806832e-05/3*x**3
+    
     thresh = [273,600,700]
-
+    if T_lower < thresh[0]:
+        raise ValueError(f"Lower bound out of acceptable range; {T_lower} < 273K")
+    
+    T_intermediates = np.zeros(0)
     for i in reversed(range(len(thresh))):
-        if T_upper > thresh[i]:
-            T_intermediates = np.zeros(i+1)
+        if T_lower >= thresh[i]:
+            T_intermediates = np.append(T_intermediates, T_lower)
+            T_intermediates = np.append(T_intermediates, thresh[i+1:])
+            int_idx = i
             break
+    T_intermediates = np.append(T_intermediates, T_upper)
 
-    T_intermediates[0] = T_lower
-    for i in range(len(T_intermediates)-1):
-        T_intermediates[i] = thresh[i]
-    T_intermediates[-1] = T_upper
-    T_intermediates = np.append(T_intermediates, np.zeros(4 - len(T_intermediates)))
+    ints = [int_a, int_b, int_c]
+    ints = ints[int_idx:]
 
-    int_T = np.zeros(4)
-    for i in range(len(T_intermediates)):
-        if 273 <= T_intermediates[i] <= 600:
-            int_T[i] = 398.18776737*T_intermediates[i] + -0.02021752/2*T_intermediates[i]**2 + 0.00057432/3*T_intermediates**3
-        elif 600 < T_intermediates[i] <= 700:
-            int_T[i] = 1008.8601127*T_intermediates[i] + -0.69177032/2*T_intermediates[i]**2
-        else:
-            int_T[i] = 497.38204089*T_intermediates[i] + -3.70561459e-03/2*T_intermediates[i]**2 + 5.60806832e-05/2*T_intermediates[i]**2
+    sum1 = 0
+    for i in range(len(ints)):
+        sum1 += ints[i](T_intermediates[i+1])
 
-    result = 0
-    for i in range(len(int_T)):
-        result += int_T[i] - int_T[i-1]
-
-    return result       
+    sum2 = 0
+    for i in range(len(ints)):
+        sum2 += ints[i](T_intermediates[i])
+    
+    return sum1 - sum2      
